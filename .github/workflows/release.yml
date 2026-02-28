@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Tests
+        run: swift test
+
+      - name: Build Universal Binary
+        # Builds a fat binary containing both arm64 (Apple Silicon) and x86_64 (Intel) slices
+        run: swift build -c release --arch arm64 --arch x86_64
+
+      - name: Zip Binary
+        run: zip -j richclip.zip .build/apple/Products/Release/richclip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: richclip.zip
+          generate_release_notes: true
+
+      # Uncomment and configure this block if you want to automatically update a Homebrew tap
+      # - name: Update Homebrew formula
+      #   uses: dawidd6/action-homebrew-bump-formula@v4
+      #   with:
+      #     # A PAT is required to push to a different repository (your tap)
+      #     token: ${{ secrets.HOMEBREW_BUMP_TOKEN }}
+      #     # Replace with your actual tap repository (e.g., username/homebrew-tap)
+      #     tap: YOUR_GITHUB_USERNAME/homebrew-tap
+      #     formula: richclip
+      #     tag: ${{ github.ref_name }}
+      #     revision: ${{ github.sha }}
+      #     force: false
