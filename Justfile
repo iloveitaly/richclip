@@ -27,7 +27,13 @@ run:
 
 # GitHub CLI helper recipes
 # Set publish permissions, update metadata, and protect master; all in one command
-github_setup: github_repo_permissions_create github_ruleset_protect_master_create
+github_setup: github_repo_permissions_create github_repo_set_metadata github_ruleset_protect_master_create
+
+github_repo_set_metadata:
+    @gh repo edit \
+      --description "$(jq -r '.description' metadata.json)" \
+      --homepage "$(jq -r '.homepage' metadata.json)" \
+      --add-topic "$(jq -r '.keywords | join(",")' metadata.json)"
 
 GITHUB_PROTECT_MASTER_RULESET := """
 {

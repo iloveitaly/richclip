@@ -1,0 +1,10 @@
+{
+  "description": "Inspect and manipulate macOS clipboard UTIs with granular control.",
+  "homepage": "https://github.com/iloveitaly/richclip",
+  "keywords": [
+    "macos",
+    "clipboard",
+    "uti",
+    "swift"
+  ]
+}
