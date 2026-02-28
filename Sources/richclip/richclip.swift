@@ -1,87 +1,107 @@
 import AppKit
+import ArgumentParser
 import Foundation
 
 @main
-struct RichClip {
-    static func main() {
-        let arguments = CommandLine.arguments
+struct RichClip: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "richclip",
+        abstract: "A native macOS clipboard tool with granular UTI type control.",
+        subcommands: [List.self, Copy.self, Paste.self]
+    )
+}
 
-        guard arguments.count > 1 else {
-            printUsage()
-            exit(0)
-        }
+extension RichClip {
+    struct List: ParsableCommand {
+        static let configuration = CommandConfiguration(abstract: "Output all available clipboard types (UTIs)")
 
-        let subcommand = arguments[1]
+        @Flag(name: .shortAndLong, help: "Output types and values in JSON format")
+        var json: Bool = false
 
-        switch subcommand {
-        case "list":
-            listTypes()
-        case "copy":
-            handleCopy(args: Array(arguments.dropFirst(2)))
-        case "paste":
-            handlePaste(args: Array(arguments.dropFirst(2)))
-        case "--help", "-h":
-            printUsage()
-        default:
-            print("Error: Unknown subcommand '\(subcommand)'")
-            printUsage()
-            exit(1)
+        func run() throws {
+            let pasteboard = NSPasteboard.general
+            guard let types = pasteboard.types, !types.isEmpty else {
+                fputs("Error: Clipboard is empty\n", stderr)
+                throw ExitCode(1)
+            }
+
+            if json {
+                var results: [[String: String]] = []
+                for type in types {
+                    let value: String
+                    if let data = pasteboard.data(forType: type) {
+                        // Attempt to decode as UTF-8 string, fallback to base64 for binary
+                        if let string = String(data: data, encoding: .utf8) {
+                            value = string
+                        } else {
+                            value = data.base64EncodedString()
+                        }
+                    } else {
+                        value = ""
+                    }
+                    results.append(["type": type.rawValue, "value": value])
+                }
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+                let jsonData = try encoder.encode(results)
+                if let jsonString = String(data: jsonData, encoding: .utf8) {
+                    print(jsonString)
+                }
+            } else {
+                for type in types {
+                    print(type.rawValue)
+                }
+            }
         }
     }
 
-    static func printUsage() {
-        print("""
-        Usage: richclip <subcommand> [options]
+    struct Copy: ParsableCommand {
+        static let configuration = CommandConfiguration(abstract: "Copy data from stdin to the clipboard")
 
-        Subcommands:
-          list           Output all available clipboard types (UTIs)
-          copy [--type <uti>]  Copy data from stdin to the clipboard
-          paste [--type <uti>] Paste data from the clipboard to stdout
+        @Option(name: .shortAndLong, help: "The UTI to use")
+        var type: String = "public.utf8-plain-text"
 
-        Options:
-          --type <uti>   The UTI to use (default: public.utf8-plain-text)
-          --help, -h     Show this help information
-        """)
-    }
+        func run() throws {
+            let pasteboardType = NSPasteboard.PasteboardType(type)
+            let data = FileHandle.standardInput.readDataToEndOfFile()
 
-    static func listTypes() {
-        let pasteboard = NSPasteboard.general
-        guard let types = pasteboard.types, !types.isEmpty else {
-            fputs("Error: Clipboard is empty\n", stderr)
-            exit(1)
-        }
-        for type in types {
-            print(type.rawValue)
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setData(data, forType: pasteboardType)
         }
     }
 
-    static func handleCopy(args: [String]) {
-        var type = NSPasteboard.PasteboardType.string
+    struct Paste: ParsableCommand {
+        static let configuration = CommandConfiguration(abstract: "Paste data from the clipboard to stdout")
 
-        if let typeIndex = args.firstIndex(of: "--type"), typeIndex + 1 < args.count {
-            type = NSPasteboard.PasteboardType(args[typeIndex + 1])
+        @Option(name: .shortAndLong, help: "The UTI to use (defaults to plain text if available)")
+        var type: String?
+
+        func run() throws {
+            let pasteboard = NSPasteboard.general
+            let pasteboardType: NSPasteboard.PasteboardType
+
+            if let type = type {
+                pasteboardType = NSPasteboard.PasteboardType(type)
+            } else if let types = pasteboard.types, !types.isEmpty {
+                // Default to plain text if it exists, otherwise use the first available type
+                if types.contains(.string) {
+                    pasteboardType = .string
+                } else {
+                    pasteboardType = types[0]
+                }
+            } else {
+                fputs("Error: Clipboard is empty\n", stderr)
+                throw ExitCode(1)
+            }
+
+            guard let data = pasteboard.data(forType: pasteboardType) else {
+                fputs("Error: No data found for type '\(pasteboardType.rawValue)'\n", stderr)
+                throw ExitCode(1)
+            }
+
+            FileHandle.standardOutput.write(data)
         }
-
-        let data = FileHandle.standardInput.readDataToEndOfFile()
-
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setData(data, forType: type)
     }
 
-    static func handlePaste(args: [String]) {
-        var type = NSPasteboard.PasteboardType.string
-
-        if let typeIndex = args.firstIndex(of: "--type"), typeIndex + 1 < args.count {
-            type = NSPasteboard.PasteboardType(args[typeIndex + 1])
-        }
-
-        let pasteboard = NSPasteboard.general
-        guard let data = pasteboard.data(forType: type) else {
-            fputs("Error: No data found for type '\(type.rawValue)'\n", stderr)
-            exit(1)
-        }
-
-        FileHandle.standardOutput.write(data)
-    }
 }
