@@ -7,7 +7,7 @@ struct RichClip: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "richclip",
         abstract: "A native macOS clipboard tool with granular UTI type control.",
-        subcommands: [List.self, Copy.self, Paste.self]
+        subcommands: [List.self, Copy.self, Paste.self],
     )
 
     @Option(name: .shortAndLong, help: "The UTI to use (implicitly copies if stdin has data, pastes otherwise)")
@@ -30,7 +30,7 @@ struct RichClip: ParsableCommand {
             let pasteboard = NSPasteboard.general
             let pasteboardType: NSPasteboard.PasteboardType
 
-            if let type = type {
+            if let type {
                 pasteboardType = NSPasteboard.PasteboardType(type)
             } else if let types = pasteboard.types, !types.isEmpty {
                 if types.contains(.string) {
@@ -70,16 +70,15 @@ extension RichClip {
             if json {
                 var results: [[String: String]] = []
                 for type in types {
-                    let value: String
-                    if let data = pasteboard.data(forType: type) {
+                    let value: String = if let data = pasteboard.data(forType: type) {
                         // Attempt to decode as UTF-8 string, fallback to base64 for binary
                         if let string = String(data: data, encoding: .utf8) {
-                            value = string
+                            string
                         } else {
-                            value = data.base64EncodedString()
+                            data.base64EncodedString()
                         }
                     } else {
-                        value = ""
+                        ""
                     }
                     results.append(["type": type.rawValue, "value": value])
                 }
@@ -123,7 +122,7 @@ extension RichClip {
             let pasteboard = NSPasteboard.general
             let pasteboardType: NSPasteboard.PasteboardType
 
-            if let type = type {
+            if let type {
                 pasteboardType = NSPasteboard.PasteboardType(type)
             } else if let types = pasteboard.types, !types.isEmpty {
                 // Default to plain text if it exists, otherwise use the first available type

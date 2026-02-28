@@ -15,11 +15,11 @@ let package = Package(
             name: "richclip",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-            ]
+            ],
         ),
         .testTarget(
             name: "richclipTests",
-            dependencies: ["richclip"]
+            dependencies: ["richclip"],
         ),
-    ]
+    ],
 )

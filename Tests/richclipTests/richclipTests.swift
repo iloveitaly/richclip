@@ -7,7 +7,7 @@ final class richclipTests: XCTestCase {
         NSPasteboard.general.clearContents()
     }
 
-    func testListTypes() throws {
+    func testListTypes() {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString("test", forType: .string)
@@ -23,7 +23,7 @@ final class richclipTests: XCTestCase {
     func testCopyAndPasteString() throws {
         let testString = "Hello, World!"
         let type = NSPasteboard.PasteboardType.string
-        let data = testString.data(using: .utf8)!
+        let data = try XCTUnwrap(testString.data(using: .utf8))
 
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
@@ -38,7 +38,7 @@ final class richclipTests: XCTestCase {
         XCTAssertEqual(testString, retrievedString)
     }
 
-    func testCustomType() throws {
+    func testCustomType() {
         let testData = "custom data".data(using: .utf8)!
         let customType = NSPasteboard.PasteboardType("com.example.custom")
 
