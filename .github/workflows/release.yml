@@ -33,8 +33,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - uses: jdx/mise-action@v3
+
       - name: Run Tests
-        run: swift test
+        run: just test
 
       - name: Build Universal Binary
         # Builds a fat binary containing both arm64 (Apple Silicon) and x86_64 (Intel) slices
