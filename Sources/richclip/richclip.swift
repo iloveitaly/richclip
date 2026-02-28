@@ -103,5 +103,4 @@ extension RichClip {
             FileHandle.standardOutput.write(data)
         }
     }
-
 }
