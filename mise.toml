@@ -1,0 +1,3 @@
+[tools]
+swift = "latest"
+swiftformat = { version = "latest", no_app = "true", rename_exe = "swiftformat" }
