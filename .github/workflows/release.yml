@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - master
   # Allow manual triggering for testing
   workflow_dispatch:
 

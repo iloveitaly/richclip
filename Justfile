@@ -26,17 +26,17 @@ run:
     swift run richclip
 
 # GitHub CLI helper recipes
-# Set publish permissions, update metadata, and protect main; all in one command
-github_setup: github_repo_permissions_create github_ruleset_protect_main_create
+# Set publish permissions, update metadata, and protect master; all in one command
+github_setup: github_repo_permissions_create github_ruleset_protect_master_create
 
-GITHUB_PROTECT_MAIN_RULESET := """
+GITHUB_PROTECT_MASTER_RULESET := """
 {
-  "name": "Protect main from force pushes",
+  "name": "Protect master from force pushes",
   "target": "branch",
   "enforcement": "active",
   "conditions": {
     "ref_name": {
-      "include": ["refs/heads/main"],
+      "include": ["refs/heads/master"],
       "exclude": []
     }
   },
@@ -52,15 +52,15 @@ _github_repo:
     @gh repo view --json nameWithOwner -q .nameWithOwner
 
 # This only supports deleting the single ruleset specified above
-github_ruleset_protect_main_delete:
+github_ruleset_protect_master_delete:
     @repo=$(just _github_repo) && \
-    ruleset_name=$(echo '{{GITHUB_PROTECT_MAIN_RULESET}}' | jq -r .name) && \
+    ruleset_name=$(echo '{{GITHUB_PROTECT_MASTER_RULESET}}' | jq -r .name) && \
     ruleset_id=$(gh api repos/$repo/rulesets --jq ".[] | select(.name == \"$ruleset_name\") | .id") && \
     (([ -n "${ruleset_id}" ] || (echo "No ruleset found" && exit 0)) || gh api --method DELETE repos/$repo/rulesets/$ruleset_id)
 
-# Adds github ruleset to prevent --force and other destructive actions on the github main branch
-github_ruleset_protect_main_create: github_ruleset_protect_main_delete
-    @gh api --method POST repos/$(just _github_repo)/rulesets --input - <<< '{{GITHUB_PROTECT_MAIN_RULESET}}'
+# Adds github ruleset to prevent --force and other destructive actions on the github master branch
+github_ruleset_protect_master_create: github_ruleset_protect_master_delete
+    @gh api --method POST repos/$(just _github_repo)/rulesets --input - <<< '{{GITHUB_PROTECT_MASTER_RULESET}}'
 
 # Set GitHub Actions permissions for the repository to allow workflows to write and approve PR reviews
 # This enables release-please to run without a personal access token

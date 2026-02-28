@@ -9,7 +9,7 @@ I built this because I often needed to debug what exactly was on my pasteboard w
 You can install richclip using [mise](https://mise.jdx.dev/):
 
 ```bash
-mise use -g ubi:iloveitaly/richclip@latest
+mise use -g github:iloveitaly/richclip
 ```
 
 Alternatively, you can download the universal binary from the [latest release](https://github.com/iloveitaly/richclip/releases) and place it in your `$PATH`.
