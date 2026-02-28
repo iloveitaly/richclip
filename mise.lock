@@ -1,6 +1,11 @@
+[[tools.just]]
+version = "1.46.0"
+backend = "aqua:casey/just"
+
 [[tools.swift]]
-version = "6.2.4"
+version = "6.1"
 backend = "core:swift"
+"platforms.macos-arm64" = { checksum = "blake3:f11bbe4197f04d8383bec071f6516e31d949ff7aa5d1afb62c76ef6cc80a60ae"}
 
 [[tools.swiftformat]]
 version = "0.59.1"

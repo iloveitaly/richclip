@@ -1,3 +1,4 @@
 [tools]
-swift = "latest"
+just = "latest"
+swift = "6.1"
 swiftformat = { version = "latest", no_app = "true", rename_exe = "swiftformat" }
