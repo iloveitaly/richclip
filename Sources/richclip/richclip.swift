@@ -9,6 +9,48 @@ struct RichClip: ParsableCommand {
         abstract: "A native macOS clipboard tool with granular UTI type control.",
         subcommands: [List.self, Copy.self, Paste.self]
     )
+
+    @Option(name: .shortAndLong, help: "The UTI to use (implicitly copies if stdin has data, pastes otherwise)")
+    var type: String?
+
+    mutating func run() throws {
+        let hasStdin = isatty(STDIN_FILENO) == 0
+
+        if hasStdin {
+            // Implicit Copy
+            let typeToUse = type ?? "public.utf8-plain-text"
+            let pasteboardType = NSPasteboard.PasteboardType(typeToUse)
+            let data = FileHandle.standardInput.readDataToEndOfFile()
+
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setData(data, forType: pasteboardType)
+        } else {
+            // Implicit Paste
+            let pasteboard = NSPasteboard.general
+            let pasteboardType: NSPasteboard.PasteboardType
+
+            if let type = type {
+                pasteboardType = NSPasteboard.PasteboardType(type)
+            } else if let types = pasteboard.types, !types.isEmpty {
+                if types.contains(.string) {
+                    pasteboardType = .string
+                } else {
+                    pasteboardType = types[0]
+                }
+            } else {
+                fputs("Error: Clipboard is empty\n", stderr)
+                throw ExitCode(1)
+            }
+
+            guard let data = pasteboard.data(forType: pasteboardType) else {
+                fputs("Error: No data found for type '\(pasteboardType.rawValue)'\n", stderr)
+                throw ExitCode(1)
+            }
+
+            FileHandle.standardOutput.write(data)
+        }
+    }
 }
 
 extension RichClip {
