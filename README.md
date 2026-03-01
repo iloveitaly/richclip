@@ -2,6 +2,8 @@
 
 richclip is a native macOS command-line tool that gives you granular control over your clipboard data. While standard tools like `pbcopy` and `pbpaste` only handle plain text, richclip allows you to inspect, read, and write any Uniform Type Identifier (UTI) format, such as `public.html`, `public.png`, or `com.adobe.pdf`.
 
+This is particularly useful for **enabling LLMs to inspect the full context of your clipboard**, allowing them to see exactly how data is structured in various formats.
+
 I built this because I often needed to debug what exactly was on my pasteboard when building web integrations or Raycast extensions. It's written in Swift with zero external runtime dependencies, utilizing the native `NSPasteboard` API.
 
 ## Installation

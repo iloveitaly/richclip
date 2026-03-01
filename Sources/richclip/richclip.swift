@@ -6,7 +6,8 @@ import Foundation
 struct RichClip: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "richclip",
-        abstract: "A native macOS clipboard tool with granular UTI type control.",
+        abstract: "A native macOS clipboard tool with granular UTI type control. Ideal for enabling LLMs to inspect all clipboard formats.",
+        discussion: "More info at https://github.com/iloveitaly/richclip",
         subcommands: [List.self, Copy.self, Paste.self],
     )
 
