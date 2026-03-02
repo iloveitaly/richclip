@@ -2,6 +2,14 @@ import AppKit
 import ArgumentParser
 import Foundation
 
+struct SharedOptions: ParsableArguments {
+    @Option(name: .shortAndLong, help: "The UTI to use")
+    var type: String?
+
+    @Flag(name: .customLong("base64"), help: "Decode stdin from Base64 (copy) or encode stdout to Base64 (paste)")
+    var base64: Bool = false
+}
+
 @main
 struct RichClip: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -13,45 +21,19 @@ struct RichClip: ParsableCommand {
         subcommands: [List.self, Copy.self, Paste.self],
     )
 
-    @Option(name: .shortAndLong, help: "The UTI to use (implicitly copies if stdin has data, pastes otherwise)")
-    var type: String?
+    @OptionGroup var shared: SharedOptions
 
     mutating func run() throws {
         let hasStdin = isatty(STDIN_FILENO) == 0
 
         if hasStdin {
-            // Implicit Copy
-            let typeToUse = type ?? "public.utf8-plain-text"
-            let pasteboardType = NSPasteboard.PasteboardType(typeToUse)
-            let data = FileHandle.standardInput.readDataToEndOfFile()
-
-            let pasteboard = NSPasteboard.general
-            pasteboard.clearContents()
-            pasteboard.setData(data, forType: pasteboardType)
+            var copyCommand = Copy()
+            copyCommand.shared = shared
+            try copyCommand.run()
         } else {
-            // Implicit Paste
-            let pasteboard = NSPasteboard.general
-            let pasteboardType: NSPasteboard.PasteboardType
-
-            if let type {
-                pasteboardType = NSPasteboard.PasteboardType(type)
-            } else if let types = pasteboard.types, !types.isEmpty {
-                if types.contains(.string) {
-                    pasteboardType = .string
-                } else {
-                    pasteboardType = types[0]
-                }
-            } else {
-                fputs("Error: Clipboard is empty\n", stderr)
-                throw ExitCode(1)
-            }
-
-            guard let data = pasteboard.data(forType: pasteboardType) else {
-                fputs("Error: No data found for type '\(pasteboardType.rawValue)'\n", stderr)
-                throw ExitCode(1)
-            }
-
-            FileHandle.standardOutput.write(data)
+            var pasteCommand = Paste()
+            pasteCommand.shared = shared
+            try pasteCommand.run()
         }
     }
 }
@@ -102,30 +84,47 @@ extension RichClip {
     struct Copy: ParsableCommand {
         static let configuration = CommandConfiguration(abstract: "Copy data from stdin to the clipboard")
 
-        @Option(name: .shortAndLong, help: "The UTI to use")
-        var type: String = "public.utf8-plain-text"
+        @OptionGroup var shared: SharedOptions
 
         func run() throws {
-            let pasteboardType = NSPasteboard.PasteboardType(type)
-            let data = FileHandle.standardInput.readDataToEndOfFile()
+            let typeToUse = shared.type ?? "public.utf8-plain-text"
+            let pasteboardType = NSPasteboard.PasteboardType(typeToUse)
+
+            var data = FileHandle.standardInput.readDataToEndOfFile()
+
+            if shared.base64 {
+                guard let decodedData = Data(base64Encoded: data, options: .ignoreUnknownCharacters) else {
+                    fputs("Error: Input is not valid Base64\n", stderr)
+                    throw ExitCode(1)
+                }
+                data = decodedData
+            }
 
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
-            pasteboard.setData(data, forType: pasteboardType)
+
+            // CRITICAL: Declare the type before setting data. This ensures custom or non-standard
+            // UTIs are registered correctly and not mapped to a default string format.
+            pasteboard.declareTypes([pasteboardType], owner: nil)
+
+            let success = pasteboard.setData(data, forType: pasteboardType)
+            if !success {
+                fputs("Error: Failed to set data for type '\(pasteboardType.rawValue)'. The format might be invalid or unsupported by the clipboard.\n", stderr)
+                throw ExitCode(1)
+            }
         }
     }
 
     struct Paste: ParsableCommand {
         static let configuration = CommandConfiguration(abstract: "Paste data from the clipboard to stdout")
 
-        @Option(name: .shortAndLong, help: "The UTI to use (defaults to plain text if available)")
-        var type: String?
+        @OptionGroup var shared: SharedOptions
 
         func run() throws {
             let pasteboard = NSPasteboard.general
             let pasteboardType: NSPasteboard.PasteboardType
 
-            if let type {
+            if let type = shared.type {
                 pasteboardType = NSPasteboard.PasteboardType(type)
             } else if let types = pasteboard.types, !types.isEmpty {
                 // Default to plain text if it exists, otherwise use the first available type
@@ -144,7 +143,14 @@ extension RichClip {
                 throw ExitCode(1)
             }
 
-            FileHandle.standardOutput.write(data)
+            if shared.base64 {
+                let base64String = data.base64EncodedString()
+                if let base64Data = base64String.data(using: .utf8) {
+                    FileHandle.standardOutput.write(base64Data)
+                }
+            } else {
+                FileHandle.standardOutput.write(data)
+            }
         }
     }
 }

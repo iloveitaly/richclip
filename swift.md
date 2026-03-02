@@ -36,7 +36,17 @@ We wanted the CLI to be smart: if a user pipes data in (`echo "text" | cli`), it
 *   **The Elegant Solution:** Put `@main` on the root `ParsableCommand` struct. Add a `mutating func run() throws` to the root struct. This method is executed *only* if the user provides no subcommands. Inside this method, we can safely execute our default fallback logic.
 *   **POSIX Stdin Check:** To detect if data is being piped, `isatty(STDIN_FILENO) == 0` is the bulletproof C-level check available in Foundation.
 
-## 3. Testing Strategies (`XCTest`)
+## 3. macOS Frameworks (`AppKit` & `NSPasteboard`)
+
+### The `declareTypes` Gotcha
+When interacting with `NSPasteboard` to write custom or private UTIs (like `org.chromium.web-custom-data`), simply using `setData(_:forType:)` is insufficient. If the type is not known to the system, macOS will either drop the data or incorrectly map it to a standard string type.
+*   **The Fix:** You **must** call `declareTypes([yourType], owner: nil)` *after* clearing the pasteboard and *before* setting the data. This registers the precise UTI for that payload.
+
+### Handling Raw Binary Data
+When building CLIs that pipe binary data into AppKit frameworks, standard `stdin`/`stdout` pipelines can mangle null bytes or UTF-16 strings.
+*   **The Fix:** Read raw data directly via `FileHandle.standardInput.readDataToEndOfFile()`. To make the CLI scriptable without shell corruption, provide a `--base64` flag that allows the user to ingest/export binary blobs encoded safely as Base64 strings.
+
+## 4. Testing Strategies (`XCTest`)
 
 ### Binary Integration Testing
 You don't just want to test internal functions; you want to test the compiled binary.

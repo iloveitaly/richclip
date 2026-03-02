@@ -39,6 +39,18 @@ echo "<b>Bold</b>" | richclip --type public.html
 richclip --type public.html
 ```
 
+### Advanced Binary Handling (Base64)
+
+When dealing with complex raw binary blobs (e.g., specific internal data structures or Chromium pickled data), passing raw bytes via standard input/output in the shell can corrupt the data (due to null bytes or UTF-16 mismatches). `richclip` provides a `--base64` flag to safely ingest and export binary data.
+
+```bash
+# Safely copy binary data to a custom UTI from a base64 string
+echo "aGVsbG8=" | richclip copy --type com.example.binary --base64
+
+# Export that specific UTI back to base64
+richclip paste --type com.example.binary --base64
+```
+
 ### Advanced Inspection
 
 Use the `list` subcommand to see exactly what's on your clipboard:

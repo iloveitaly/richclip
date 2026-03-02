@@ -41,7 +41,7 @@ session_id = client_secret_id.split("_secret")[0]
 
 ## Deeply Inspect Packages by Cloning Repository
 
-You can clone any packages you may need to look closely at into `tmp/` in order to inspect the logic and functionality more closely. No need to cleanup, `tmp/` will be automatically cleaned up later.
+You can clone any packages you may need to look closely at into `./tmp/` in order to inspect the logic and functionality more closely. No need to cleanup, `tmp/` will be automatically cleaned up later.
 
 ## Expert Engineer With Limited Domain Knowledge, Add Comments
 
