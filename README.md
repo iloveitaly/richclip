@@ -66,9 +66,9 @@ richclip list --json
 ## Features
 
 * **Universal Binary**: Runs natively on both Intel and Apple Silicon Macs.
-* **Implicit Actions**: Automatically switches between copy and paste based on `stdin` presence.
+* **Implicit Actions**: Automatically switches between copy and paste based on `stdin` presence. Only auto-copies if there is actual data piped in, preventing accidental clipboard clearing.
 * **JSON Output**: Inspect complex clipboard states including binary data encoded as Base64.
-* **Smart Default Paste**: Prioritizes plain text but falls back to the "richest" available UTI if text isn't present.
+* **Smart Default Paste**: Automatically picks the "richest" available UTI (the first representation provided by the source app).
 * **Zero Dependencies**: A single standalone Swift binary that uses native macOS APIs.
 
 ## [MIT License](LICENSE.md)
