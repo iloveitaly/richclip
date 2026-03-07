@@ -8,5 +8,10 @@ backend = "core:swift"
 "platforms.macos-arm64" = { checksum = "blake3:f11bbe4197f04d8383bec071f6516e31d949ff7aa5d1afb62c76ef6cc80a60ae"}
 
 [[tools.swiftformat]]
-version = "0.59.1"
+version = "0.60.0"
 backend = "github:nicklockwood/SwiftFormat"
+"platforms.linux-arm64" = { checksum = "sha256:bf04f581f56436e17dc78b7d4ab5d6890a983a6a4ddf60156a8ea81e5d7cf7ce", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.60.0/swiftformat_linux_aarch64.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/366168215"}
+"platforms.linux-x64" = { checksum = "sha256:ec804d11366205f81ed278e852d615d9216f69c0f80fe79fe67791e65d46e01a", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.60.0/swiftformat_linux.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/366168193"}
+"platforms.macos-arm64" = { checksum = "sha256:8fe9aaec033fc994cbf07366eeffad2963601d1a0e975474546a606ead6e5a39", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.60.0/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/366168177"}
+"platforms.macos-x64" = { checksum = "sha256:8fe9aaec033fc994cbf07366eeffad2963601d1a0e975474546a606ead6e5a39", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.60.0/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/366168177"}
+"platforms.windows-x64" = { checksum = "sha256:1c4e5f0ea039c96380069af52d26ace116265cc5a890ae9230c7d3a5dcca0fe2", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.60.0/SwiftFormat.amd64.msi", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/366168068"}
