@@ -150,4 +150,37 @@ final class richclipTests: XCTestCase {
         let binaryEntry = json?.first { $0["type"] == "com.example.binary" }
         XCTAssertEqual(binaryEntry?["value"], binaryData.base64EncodedString())
     }
+
+    func testRichestTypeFallback() throws {
+        let htmlData = "<b>html</b>".data(using: .utf8)!
+        let textData = "text".data(using: .utf8)!
+        
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        // Declare HTML first (richest)
+        pasteboard.declareTypes([.html, .string], owner: nil)
+        pasteboard.setData(htmlData, forType: .html)
+        pasteboard.setData(textData, forType: .string)
+
+        let binaryPath = Bundle.main.bundlePath.components(separatedBy: ".build")[0] + ".build/debug/richclip"
+        guard FileManager.default.fileExists(atPath: binaryPath) else {
+            return
+        }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: binaryPath)
+        process.arguments = ["paste"]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+
+        try process.run()
+        process.waitUntilExit()
+
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: data, encoding: .utf8) ?? ""
+
+        // Should pick HTML because it's the first type declared
+        XCTAssertEqual(output, "<b>html</b>")
+    }
 }

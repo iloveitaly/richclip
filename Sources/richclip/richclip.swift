@@ -24,13 +24,27 @@ struct RichClip: ParsableCommand {
     @OptionGroup var shared: SharedOptions
 
     mutating func run() throws {
-        let hasStdin = isatty(STDIN_FILENO) == 0
+        // Only run smart logic if no subcommand is provided.
+        // swift-argument-parser only calls this run() if no subcommand matched.
 
-        if hasStdin {
+        // If interactive (TTY), we should definitely paste.
+        if isatty(STDIN_FILENO) == 1 {
+            var pasteCommand = Paste()
+            pasteCommand.shared = shared
+            try pasteCommand.run()
+            return
+        }
+
+        // If not interactive (pipe or file), read stdin and decide.
+        let data = FileHandle.standardInput.readDataToEndOfFile()
+        if !data.isEmpty {
+            // Non-empty stdin: Copy
             var copyCommand = Copy()
             copyCommand.shared = shared
+            copyCommand.dataToCopy = data
             try copyCommand.run()
         } else {
+            // Empty stdin: Paste
             var pasteCommand = Paste()
             pasteCommand.shared = shared
             try pasteCommand.run()
@@ -86,11 +100,14 @@ extension RichClip {
 
         @OptionGroup var shared: SharedOptions
 
+        // Optional data passed from the root command's smart logic
+        var dataToCopy: Data?
+
         func run() throws {
             let typeToUse = shared.type ?? "public.utf8-plain-text"
             let pasteboardType = NSPasteboard.PasteboardType(typeToUse)
 
-            var data = FileHandle.standardInput.readDataToEndOfFile()
+            var data = dataToCopy ?? FileHandle.standardInput.readDataToEndOfFile()
 
             if shared.base64 {
                 guard let decodedData = Data(base64Encoded: data, options: .ignoreUnknownCharacters) else {
@@ -127,19 +144,17 @@ extension RichClip {
             if let type = shared.type {
                 pasteboardType = NSPasteboard.PasteboardType(type)
             } else if let types = pasteboard.types, !types.isEmpty {
-                // Default to plain text if it exists, otherwise use the first available type
-                if types.contains(.string) {
-                    pasteboardType = .string
-                } else {
-                    pasteboardType = types[0]
-                }
+                // Default to the first (richest) type available.
+                // Standard macOS practice is to put the richest representation first.
+                pasteboardType = types[0]
             } else {
                 fputs("Error: Clipboard is empty\n", stderr)
                 throw ExitCode(1)
             }
 
             guard let data = pasteboard.data(forType: pasteboardType) else {
-                fputs("Error: No data found for type '\(pasteboardType.rawValue)'\n", stderr)
+                let availableTypes = pasteboard.types?.map { $0.rawValue }.joined(separator: ", ") ?? "none"
+                fputs("Error: No data found for type '\(pasteboardType.rawValue)'. Available types: \(availableTypes)\n", stderr)
                 throw ExitCode(1)
             }
 
