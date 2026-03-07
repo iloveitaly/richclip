@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/iloveitaly/richclip/compare/v1.1.0...v1.2.0) (2026-03-07)
+
+
+### Features
+
+* add base64 support and fix custom UTI handling ([bb62339](https://github.com/iloveitaly/richclip/commit/bb623398aa3faa1bc242c62444a7b7b922062eb5))
+
 ## [1.1.0](https://github.com/iloveitaly/richclip/compare/v1.0.0...v1.1.0) (2026-03-02)
 
 
