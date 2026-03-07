@@ -17,7 +17,7 @@ struct RichClip: ParsableCommand {
         abstract: "A native macOS clipboard tool with granular UTI type control. Ideal for enabling LLMs to inspect all clipboard formats.",
         discussion: "More info at https://github.com/iloveitaly/richclip",
         // x-release-please-version
-        version: "1.0.0",
+        version: "1.1.0",
         subcommands: [List.self, Copy.self, Paste.self],
     )
 
