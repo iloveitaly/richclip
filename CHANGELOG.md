@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/iloveitaly/richclip/compare/v1.2.0...v1.2.1) (2026-03-07)
+
+
+### Bug Fixes
+
+* prefer richest clipboard type and improve paste fallback ([ee70476](https://github.com/iloveitaly/richclip/commit/ee70476f3b11173c104627ee887b863e6acc0584))
+
 ## [1.2.0](https://github.com/iloveitaly/richclip/compare/v1.1.0...v1.2.0) (2026-03-07)
 
 
