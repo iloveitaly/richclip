@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/iloveitaly/richclip/compare/v1.2.1...v1.3.0) (2026-03-17)
+
+
+### Features
+
+* support copying files via path shortcut and automatic UTI detection ([e3d3f65](https://github.com/iloveitaly/richclip/commit/e3d3f6517e4101b1f04d9f2fe143645d329c252c))
+
 ## [1.2.1](https://github.com/iloveitaly/richclip/compare/v1.2.0...v1.2.1) (2026-03-07)
 
 
