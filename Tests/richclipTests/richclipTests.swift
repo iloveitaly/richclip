@@ -154,7 +154,7 @@ final class richclipTests: XCTestCase {
     func testRichestTypeFallback() throws {
         let htmlData = "<b>html</b>".data(using: .utf8)!
         let textData = "text".data(using: .utf8)!
-        
+
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         // Declare HTML first (richest)
@@ -182,5 +182,84 @@ final class richclipTests: XCTestCase {
 
         // Should pick HTML because it's the first type declared
         XCTAssertEqual(output, "<b>html</b>")
+    }
+
+    func testCopyFileShortcut() throws {
+        let tempFile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("test.txt")
+        let content = "test file content"
+        try content.write(to: tempFile, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tempFile) }
+
+        let binaryPath = Bundle.main.bundlePath.components(separatedBy: ".build")[0] + ".build/debug/richclip"
+        guard FileManager.default.fileExists(atPath: binaryPath) else { return }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: binaryPath)
+        process.arguments = [tempFile.path]
+
+        try process.run()
+        process.waitUntilExit()
+
+        XCTAssertEqual(process.terminationStatus, 0)
+
+        let pasteboard = NSPasteboard.general
+        // On macOS, text file UTI might be public.plain-text
+        let data = pasteboard.data(forType: NSPasteboard.PasteboardType("public.plain-text"))
+            ?? pasteboard.data(forType: .string)
+
+        XCTAssertNotNil(data)
+        if let data {
+            XCTAssertEqual(String(data: data, encoding: .utf8), content)
+        }
+    }
+
+    func testCopyImageSubcommand() throws {
+        // Create a dummy PNG file (just some bytes with .png extension)
+        let tempFile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("test.png")
+        let content = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) // PNG signature
+        try content.write(to: tempFile)
+        defer { try? FileManager.default.removeItem(at: tempFile) }
+
+        let binaryPath = Bundle.main.bundlePath.components(separatedBy: ".build")[0] + ".build/debug/richclip"
+        guard FileManager.default.fileExists(atPath: binaryPath) else { return }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: binaryPath)
+        process.arguments = ["copy", tempFile.path]
+
+        try process.run()
+        process.waitUntilExit()
+
+        XCTAssertEqual(process.terminationStatus, 0)
+
+        let pasteboard = NSPasteboard.general
+        let data = pasteboard.data(forType: .png)
+        XCTAssertNotNil(data)
+        XCTAssertEqual(data, content)
+    }
+
+    func testCopyFileWithCustomType() throws {
+        let tempFile = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("test.data")
+        let content = Data([0xDE, 0xAD, 0xBE, 0xEF])
+        try content.write(to: tempFile)
+        defer { try? FileManager.default.removeItem(at: tempFile) }
+
+        let binaryPath = Bundle.main.bundlePath.components(separatedBy: ".build")[0] + ".build/debug/richclip"
+        guard FileManager.default.fileExists(atPath: binaryPath) else { return }
+
+        let customType = "com.example.mytype"
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: binaryPath)
+        process.arguments = ["--type", customType, tempFile.path]
+
+        try process.run()
+        process.waitUntilExit()
+
+        XCTAssertEqual(process.terminationStatus, 0)
+
+        let pasteboard = NSPasteboard.general
+        let data = pasteboard.data(forType: NSPasteboard.PasteboardType(customType))
+        XCTAssertNotNil(data)
+        XCTAssertEqual(data, content)
     }
 }
