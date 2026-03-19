@@ -20,7 +20,7 @@ struct RichClip: ParsableCommand {
         // x-release-please-version
         version: "1.1.0",
         subcommands: [List.self, Copy.self, Paste.self, Main.self],
-        defaultSubcommand: Main.self
+        defaultSubcommand: Main.self,
     )
 }
 
@@ -59,7 +59,6 @@ extension RichClip {
     }
 
     struct List: ParsableCommand {
-        // ... (List remains unchanged)
         static let configuration = CommandConfiguration(abstract: "Output all available clipboard types (UTIs)")
 
         @Flag(name: .shortAndLong, help: "Output types and values in JSON format")
